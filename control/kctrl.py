@@ -77,7 +77,7 @@ midi_conn = context.socket(zmq.PULL)
 midi_conn.connect("tcp://192.168.0.2:1250")
 
 pid_viz_conn = context.socket(zmq.PUSH)
-pid_viz_conn.connect("tcp://172.16.14.106:5123")
+pid_viz_conn.connect("tcp://127.0.0.1:5123")
 
 ctrl_conn = context.socket(zmq.PULL)
 ctrl_conn.connect("tcp://127.0.0.1:5124")
