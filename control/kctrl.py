@@ -141,6 +141,7 @@ rp_i = r_pid.Ki
 rp_d = r_pid.Kd
 
 while True:
+    
     try:
         data = kinect_conn.recv_json()
         #print "Got data"
@@ -155,50 +156,51 @@ while True:
         if detected:
             last_detect_ts = time.time()
 
+
         #x_r = (x/f_x) * z
         #y_r = (y/f_y) * z
-
-        try:
-            while True:
-                md = midi_conn.recv_json(zmq.NOBLOCK)
-                print (md["knobs"][0] - 0.5) * 2
-                r_pid.set_point = (md["knobs"][0]-0.5) * 2
-                p_pid.set_point = (md["knobs"][1]-0.5) * 2
-                y_pid.set_point = md["knobs"][2] * 360
-
-                rp_p = md["sliders"][0] * 40
-                rp_i = md["sliders"][1]
-                rp_d = md["sliders"][2] * 200
-
-                #r_pid.Kp = rp_p
-                #p_pid.Kp = rp_p
-
-                #r_pid.Ki = rp_i
-                #p_pid.Ki = rp_i
-
-                #r_pid.Kd = rp_d
-                #p_pid.Kd = rp_d
-
-                #midi_acc = (md["sliders"][3]-0.5)
-        except zmq.error.Again:
-            pass
+        
+#        try:#Always passed
+#            while True:
+#                md = midi_conn.recv_json(zmq.NOBLOCK)
+#                print (md["knobs"][0] - 0.5) * 2
+#                r_pid.set_point = (md["knobs"][0]-0.5) * 2
+#                p_pid.set_point = (md["knobs"][1]-0.5) * 2
+#                y_pid.set_point = md["knobs"][2] * 360
+#
+#                rp_p = md["sliders"][0] * 40
+#                rp_i = md["sliders"][1]
+#                rp_d = md["sliders"][2] * 200
+#
+#                #r_pid.Kp = rp_p
+#                #p_pid.Kp = rp_p
+#
+#                #r_pid.Ki = rp_i
+#                #p_pid.Ki = rp_i
+#
+#                #r_pid.Kd = rp_d
+#                #p_pid.Kd = rp_d
+#
+#                #midi_acc = (md["sliders"][3]-0.5)
+#        except zmq.error.Again:
+#            pass
 
         # Get the set-points (if there are any)
-        try:
-            while True:
-                ctrl_sp = ctrl_conn.recv_json(zmq.NOBLOCK)
-                yaw_sp = ctrl_sp["set-points"]["yaw"]
-                r_pid.set_point = ctrl_sp["set-points"]["roll"]
-                p_pid.set_point = ctrl_sp["set-points"]["pitch"]
-                midi_acc = ctrl_sp["set-points"]["velocity"]
-        except zmq.error.Again:
-            pass
+#        try:
+#            while True:
+#                ctrl_sp = ctrl_conn.recv_json(zmq.NOBLOCK)
+#                yaw_sp = ctrl_sp["set-points"]["yaw"]
+#                r_pid.set_point = ctrl_sp["set-points"]["roll"]
+#                p_pid.set_point = ctrl_sp["set-points"]["pitch"]
+#                midi_acc = ctrl_sp["set-points"]["velocity"]
+#        except zmq.error.Again:
+#            pass
 
         #print "RP P/I/D={}/{}/{}".format(rp_p, rp_i, rp_d)
 
         if time.time() - last_detect_ts < detect_threas_ms:
             if on_detect_counter >= 5:
-                #print "IN  : x={:4.2f}, y={:4.2f}, z={:4.2f}, angle={:4.2f}".format(x, y, z, angle)
+                print "IN  : x={:4.2f}, y={:4.2f}, z={:4.2f}, angle={:4.2f}".format(x, y, z, angle)
                 #print "CORR: x={:4.2f}, y={:4.2f}, z={:4.2f}".format(x_r, y_r, z)
 
                 safety = 10
@@ -247,9 +249,17 @@ while True:
                 pitch_corr = pitch_sp * math.cos(math.radians(-angle)) - roll_sp * math.sin(math.radians(-angle))
                 roll_corr = pitch_sp * math.sin(math.radians(-angle)) + roll_sp * math.cos(math.radians(-angle))
 
-                #print "OUT: roll={:2.2f}, pitch={:2.2f}, thrust={:5.2f}, dt={:0.3f}, fps={:2.1f}".format(roll_corr, pitch_corr, thrust_sp, dt, 1/dt)
+                print "OUT: roll={:2.2f}, pitch={:2.2f}, thrust={:5.2f}, dt={:0.3f}, fps={:2.1f}".format(roll_corr, pitch_corr, thrust_sp, dt, 1/dt)
                 print "OUT: alt={:1.4f}, thrust={:5.2f}, dt={:0.3f}, fps={:2.1f}, speed={:+0.4f}".format(z, thrust_sp, dt, 1/dt, curr_velocity)
                 #print "dt={:0.3f}, fps={:2.1f}".format(dt, 1/dt)
+#		if(roll_corr > 10.0):
+#			roll_corr = 10.0
+#		elif(roll_corr < -10.0):
+#			roll_corr = -10.0
+#		if(pitch_corr > 10.0):
+#			pitch_corr = 10.0
+#		elif(pitch_corr < -10.0):
+#			pitch_corr = -10.0
                 cmd["ctrl"]["roll"] = roll_corr # math.copysign(roll_corr * roll_corr, roll_corr)
                 cmd["ctrl"]["pitch"] = pitch_corr # math.copysign(pitch_corr * pitch_corr, pitch_corr)
                 cmd["ctrl"]["thrust"] = thrust_sp * 100.0
